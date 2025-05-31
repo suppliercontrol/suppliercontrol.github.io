@@ -113,52 +113,58 @@
         }
 
         .submit-button {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: var(--goes-orange);
+            background: #FF6634;
             color: white;
-            padding: 10px 30px;
             border: none;
             border-radius: 4px;
+            padding: 10px 20px;
             cursor: pointer;
-            font-family: 'Titillium Web', sans-serif;
-            font-weight: 600;
-            margin: 30px auto 0;
-            min-width: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            position: relative;
+            font-size: 16px;
         }
 
         .submit-button:hover {
             background: #e55a2d;
         }
 
-        .submit-button .spinner {
+        .button-content {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .spinner {
             display: none;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #ffffff;
-            border-top: 2px solid transparent;
+            width: 18px;
+            height: 18px;
+            border: 2px solid transparent;
+            border-top-color: white;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.6s linear infinite;
             position: absolute;
         }
 
-        .submit-button.loading {
-            color: transparent;
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .submit-button.loading .button-content {
+            visibility: hidden;
         }
 
         .submit-button.loading .spinner {
             display: block;
         }
 
-        .submit-button.loading .button-text {
-            visibility: hidden;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .submit-button.loading {
+            pointer-events: none;
+            opacity: 0.8;
         }
 
         #conductorFields, #vehiculoFields {
@@ -421,8 +427,11 @@
             </div>
 
             <button type="submit" class="submit-button">
-                <span class="spinner"></span>
-                <span class="button-text">Registrar Persona</span>
+                <span class="button-content">
+                    <i class="material-icons">save</i>
+                    Guardar
+                </span>
+                <div class="spinner"></div>
             </button>
         </form>
     </div>
@@ -500,13 +509,14 @@
             </div>
 
             <button type="submit" class="submit-button">
-                <span class="spinner"></span>
-                <span class="button-text">Registrar Vehículo</span>
+                <span class="button-content">
+                    <i class="material-icons">save</i>
+                    Guardar
+                </span>
+                <div class="spinner"></div>
             </button>
         </form>
     </div>
-
-
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -616,9 +626,8 @@
 
         async function handleSubmitPersona(event) {
             event.preventDefault();
-            const button = event.target.querySelector('button');
-            const buttonSpinner = new ButtonSpinner(button);
-            buttonSpinner.setLoading(true);
+            const button = event.target.querySelector('.submit-button');
+            button.classList.add('loading');
             
             try {
                 const userSession = JSON.parse(localStorage.getItem('userSession'));
@@ -663,15 +672,14 @@
             } catch (error) {
                 Toast.show(error.message, 'error');
             } finally {
-                buttonSpinner.setLoading(false);
+                button.classList.remove('loading');
             }
         }
 
         async function handleSubmitVehiculo(event) {
             event.preventDefault();
-            const button = event.target.querySelector('button');
-            const buttonSpinner = new ButtonSpinner(button);
-            buttonSpinner.setLoading(true);
+            const button = event.target.querySelector('.submit-button');
+            button.classList.add('loading');
             
             try {
                 const userSession = JSON.parse(localStorage.getItem('userSession'));
@@ -710,7 +718,7 @@
             } catch (error) {
                 Toast.show(error.message, 'error');
             } finally {
-                buttonSpinner.setLoading(false);
+                button.classList.remove('loading');
             }
         }
 
