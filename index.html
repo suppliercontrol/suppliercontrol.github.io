@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Proveedores - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Variables de colores corporativos */
+        :root {
+            --goes-orange: #FF6634;
+            --goes-gray: #f5f5f5;
+            --goes-dark: #333333;
+        }
+
+        /* Estilos base */
+        body {
+            font-family: 'Titillium Web', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--goes-gray);
+        }
+
+        /* Estilos para las notificaciones toast */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            transform: translateX(120%);
+            transition: transform 0.3s ease-in-out;
+            min-width: 200px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--goes-orange);
+        }
+
+        .toast.error {
+            border-left: 4px solid #f44336;
+        }
+
+        .toast.info {
+            border-left: 4px solid var(--goes-orange);
+        }
+
+        /* Contenedor principal del login */
+        .login-container {
+            background: white;
+            padding: 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            min-height: 400px;
+        }
+
+        /* Sección del logo */
+        .logo-section {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            border-radius: 8px 0 0 8px;
+        }
+
+        .logo-section img {
+            max-width: 80%;
+            height: auto;
+        }
+
+        /* Separador vertical */
+        .separator {
+            width: 1px;
+            background: linear-gradient(to bottom, transparent, var(--goes-orange), transparent);
+            margin: 40px 0;
+        }
+
+        /* Sección del formulario */
+        .form-section {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header h1 {
+            color: var(--goes-dark);
+            font-weight: 600;
+            font-size: 1.8rem;
+            margin: 0;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--goes-dark);
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: 'Titillium Web', sans-serif;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--goes-orange);
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 12px;
+            background: var(--goes-orange);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-family: 'Titillium Web', sans-serif;
+            font-weight: 600;
+            position: relative;
+            transition: background 0.3s;
+        }
+
+        .login-button:hover {
+            background: #e55a2d;
+        }
+
+        .login-button.loading {
+            color: transparent;  /* Ocultar texto mientras carga */
+        }
+
+        .login-button .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .login-button.loading .spinner {
+            display: block;
+        }
+
+        .login-button.loading .button-text {
+            visibility: hidden;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .login-container {
+                flex-direction: column;
+                max-width: 400px;
+                margin: 20px;
+            }
+
+            .separator {
+                width: 80%;
+                height: 1px;
+                margin: 0 auto;
+            }
+
+            .logo-section, .form-section {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="toast-container"></div>
+
+    <div class="login-container">
+        <div class="logo-section">
+            <img src="https://goesperu.com/wp-content/uploads/2024/08/771x216.png" alt="GOES Logo">
+        </div>
+        
+        <div class="separator"></div>
+        
+        <div class="form-section">
+            <div class="login-header">
+                <h1>Portal de Proveedores</h1>
+            </div>
+            <form class="login-form" onsubmit="handleSubmit(event)">
+                <div class="form-group">
+                    <label for="usuario">Usuario</label>
+                    <input type="text" id="usuario" name="usuario" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="login-button" id="loginButton">
+                    <span class="button-text">Iniciar Sesión</span>
+                    <span class="spinner"></span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Sistema de notificaciones toast
+        class Toast {
+            static show(message, type = 'info', duration = 3000) {
+                const container = document.querySelector('.toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+
+                container.appendChild(toast);
+                
+                // Forzar un reflow para que la animación funcione
+                toast.offsetHeight;
+                
+                // Mostrar el toast
+                requestAnimationFrame(() => {
+                    toast.classList.add('show');
+                });
+
+                // Eliminar el toast después de la duración especificada
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        container.removeChild(toast);
+                    }, 300);
+                }, duration);
+            }
+        }
+
+        // Clase para manejar botones con spinner
+        class ButtonSpinner {
+            constructor(button) {
+                this.button = button;
+                this.originalText = button.querySelector('.button-text').textContent;
+                this.setupButton();
+            }
+
+            setupButton() {
+                // Asegurarse de que el botón tenga la estructura correcta
+                if (!this.button.querySelector('.spinner')) {
+                    const spinner = document.createElement('span');
+                    spinner.className = 'spinner';
+                    this.button.appendChild(spinner);
+                }
+                
+                if (!this.button.querySelector('.button-text')) {
+                    const textSpan = document.createElement('span');
+                    textSpan.className = 'button-text';
+                    textSpan.textContent = this.button.textContent;
+                    this.button.textContent = '';
+                    this.button.appendChild(textSpan);
+                }
+            }
+
+            setLoading(isLoading) {
+                if (isLoading) {
+                    this.button.classList.add('loading');
+                    this.button.disabled = true;
+                } else {
+                    this.button.classList.remove('loading');
+                    this.button.disabled = false;
+                }
+            }
+        }
+
+        // Función para convertir cualquier botón en un botón con spinner
+        function createSpinnerButton(buttonElement) {
+            return new ButtonSpinner(buttonElement);
+        }
+
+        // Función para convertir todos los botones de la página
+        function setupAllButtons() {
+            document.querySelectorAll('button').forEach(button => {
+                if (!button.hasSpinner) {
+                    button.hasSpinner = true;
+                    createSpinnerButton(button);
+                }
+            });
+        }
+
+        // Ejecutar al cargar la página
+        document.addEventListener('DOMContentLoaded', setupAllButtons);
+
+        // Actualizar la función handleSubmit para usar la nueva clase
+        async function handleSubmit(event) {
+            event.preventDefault();
+            const button = document.querySelector('button');
+            const buttonSpinner = new ButtonSpinner(button);
+            const usuario = document.getElementById('usuario').value;
+            const password = document.getElementById('password').value;
+
+            buttonSpinner.setLoading(true);
+
+            try {
+                const response = await fetch('https://script.google.com/macros/s/AKfycbyl4Q1-rB1pfnAU-0d4zcI9qBbXE5_niag4HhZqjmhYgAdbdU662rEpBQqF9lcLCQF6Bg/exec', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'action': 'login',
+                        'usuario': usuario,
+                        'password': password
+                    })
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    localStorage.setItem('userSession', JSON.stringify(result.data));
+                    Toast.show('Inicio de sesión exitoso', 'success');
+                    
+                    // Redirigir según el rol
+                    if (result.data.rol === 'Vigilante') {
+                        window.location.href = 'scanner.html';
+                    } else if (result.data.rol === 'Proveedor') {
+                        window.location.href = 'proveedor.html';
+                    } else {
+                        window.location.href = 'dashboard.html';
+                    }
+                } else {
+                    throw new Error(result.message || 'Error al iniciar sesión');
+                }
+            } catch (error) {
+                Toast.show('Error al conectar con el servidor', 'error');
+            } finally {
+                buttonSpinner.setLoading(false);
+            }
+        }
+
+        // Ejemplo de uso para otros botones:
+        function ejemploOtroBoton(button) {
+            const buttonSpinner = new ButtonSpinner(button);
+            buttonSpinner.setLoading(true);
+            
+            // Simular operación asíncrona
+            setTimeout(() => {
+                buttonSpinner.setLoading(false);
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

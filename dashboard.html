@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Portal de Proveedores</title>
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --goes-orange: #FF6634;
+            --goes-gray: #f5f5f5;
+            --goes-dark: #333333;
+            --sidebar-width: 250px;
+        }
+
+        body {
+            font-family: 'Titillium Web', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--goes-gray);
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: white;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .sidebar-header img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+            flex-grow: 1;
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            color: var(--goes-dark);
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .menu-item:hover {
+            background: var(--goes-gray);
+        }
+
+        .menu-item.active {
+            background: var(--goes-orange);
+            color: white;
+        }
+
+        .menu-item i {
+            margin-right: 10px;
+        }
+
+        .user-info {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            background: var(--goes-gray);
+        }
+
+        .user-info p {
+            margin: 5px 0;
+            font-size: 0.9rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex-grow: 1;
+            padding: 20px;
+            height: 100vh;
+        }
+
+        .content-iframe {
+            width: 100%;
+            height: calc(100vh - 40px);
+            border: none;
+            border-radius: 8px;
+            background: white;
+        }
+
+        /* Botón de cerrar sesión */
+        .logout-button {
+            padding: 10px 20px;
+            background: var(--goes-orange);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Titillium Web', sans-serif;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .logout-button:hover {
+            background: #e55a2d;
+        }
+
+        /* Estilos para el popup */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            text-align: center;
+            min-width: 300px;
+        }
+
+        .popup-icon {
+            color: #FF6634;
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .popup-title {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .popup-message {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .popup-button {
+            background-color: #FF6634;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .popup-button:hover {
+            background-color: #e55a2b;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="https://goesperu.com/wp-content/uploads/2024/08/771x216.png" alt="GOES Logo">
+            </div>
+            <nav class="sidebar-menu">
+                <a href="QRoperador.html" class="menu-item active" id="qrOperadorLink" target="content-frame">
+                    <i class="material-icons">admin_panel_settings</i>
+                    Control de Usuarios
+                </a>
+                <a href="registro.html" class="menu-item" target="content-frame">
+                    <i class="material-icons">person_add</i>
+                    Nuevo Registro
+                </a>
+                <a href="#" class="menu-item" onclick="mostrarPopup()">
+                    <i class="material-icons">bar_chart</i>
+                    Reportes
+                </a>
+            </nav>
+            <div class="user-info">
+                <p id="userName">Nombre: </p>
+                <p id="userRole">Rol: </p>
+                <button class="logout-button" onclick="handleLogout()">
+                    <i class="material-icons">logout</i>
+                    Cerrar Sesión
+                </button>
+            </div>
+        </aside>
+        <main class="main-content">
+            <iframe name="content-frame" class="content-iframe" src="QRoperador.html"></iframe>
+        </main>
+    </div>
+
+    <div class="popup-overlay" id="popupOverlay">
+        <div class="popup">
+            <i class="material-icons popup-icon">engineering</i>
+            <div class="popup-title">En Desarrollo</div>
+            <div class="popup-message">Esta funcionalidad se encuentra en proceso de migración.</div>
+            <button class="popup-button" onclick="cerrarPopup()">Entendido</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const userSession = JSON.parse(localStorage.getItem('userSession'));
+            if (!userSession) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Mostrar información del usuario
+            document.getElementById('userName').textContent = `Nombre: ${userSession.nombres}`;
+            document.getElementById('userRole').textContent = `Rol: ${userSession.rol}`;
+            
+            // Cargar logo del cliente si existe
+            if (userSession.logo) {
+                document.getElementById('clientLogo').src = userSession.logo;
+            }
+
+            const qrOperadorLink = document.getElementById('qrOperadorLink');
+            
+            // Mostrar/ocultar botón según el rol
+            if (userSession && userSession.rol.toLowerCase() === 'operador') {
+                qrOperadorLink.style.display = 'flex';
+            } else {
+                qrOperadorLink.style.display = 'none';
+            }
+        });
+
+        function handleLogout() {
+            localStorage.removeItem('userSession');
+            window.location.href = 'index.html';
+        }
+
+        function mostrarPopup() {
+            document.getElementById('popupOverlay').style.display = 'block';
+        }
+
+        function cerrarPopup() {
+            document.getElementById('popupOverlay').style.display = 'none';
+        }
+
+        // Cerrar el popup si se hace clic fuera de él
+        document.getElementById('popupOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                cerrarPopup();
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Personas y Vehículos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
+    <style>
+        :root {
+            --goes-orange: #FF6634;
+            --goes-gray: #f5f5f5;
+            --goes-dark: #333333;
+        }
+
+        body {
+            font-family: 'Titillium Web', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: white;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cpath d='M0 0h40v40H0z'/%3E%3Cpath d='M2 10h36M10 2v36M30 2v36M2 30h36' stroke='%23FF6634' stroke-opacity='0.07' stroke-width='1'/%3E%3Ccircle cx='10' cy='10' r='2' fill='%23FF6634' fill-opacity='0.07'/%3E%3Ccircle cx='30' cy='30' r='2' fill='%23FF6634' fill-opacity='0.07'/%3E%3Cpath d='M10 30h20M30 10H10' stroke='%23FF6634' stroke-opacity='0.07' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            border: none;
+            background: var(--goes-gray);
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Titillium Web', sans-serif;
+            font-weight: 600;
+        }
+
+        .tab-button.active {
+            background: var(--goes-orange);
+            color: white;
+        }
+
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--goes-dark);
+            font-size: 0.9rem;
+        }
+
+        .form-group label.checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .form-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Titillium Web', sans-serif;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--goes-orange);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-col {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .form-col.col-2 {
+            flex: 2;
+        }
+
+        .form-col.col-1 {
+            flex: 1;
+        }
+
+        .submit-button {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--goes-orange);
+            color: white;
+            padding: 10px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Titillium Web', sans-serif;
+            font-weight: 600;
+            margin: 30px auto 0;
+            min-width: 200px;
+        }
+
+        .submit-button:hover {
+            background: #e55a2d;
+        }
+
+        .submit-button .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            position: absolute;
+        }
+
+        .submit-button.loading {
+            color: transparent;
+        }
+
+        .submit-button.loading .spinner {
+            display: block;
+        }
+
+        .submit-button.loading .button-text {
+            visibility: hidden;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #conductorFields, #vehiculoFields {
+            background: var(--goes-gray);
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: white;
+            min-width: 300px;
+            padding: 15px 20px;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-bottom: 10px;
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--goes-orange);
+        }
+
+        .toast.error {
+            border-left: 4px solid #f44336;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .client-logo {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .goes-logo {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 100px;
+            height: auto;
+            opacity: 0.8;
+        }
+
+        /* Estilos para el botón de upload */
+        .upload-button {
+            background: var(--goes-orange);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Titillium Web', sans-serif;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .upload-button:hover {
+            background: #e55a2d;
+        }
+
+        /* Estilos para el preview de documentos */
+        .preview-container {
+            margin-top: 10px;
+        }
+
+        .preview-item {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-item .remove-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-item .remove-button:hover {
+            background: rgba(0,0,0,0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="toast-container"></div>
+
+    <!-- Agregar contenedor para logos -->
+    <div class="logo-container">
+        <img id="clientLogo" class="client-logo" src="" alt="Logo Cliente">
+    </div>
+
+    <div class="tabs">
+        <button class="tab-button active" onclick="showForm('persona')">Registro de Persona</button>
+        <button class="tab-button" onclick="showForm('vehiculo')">Registro de Vehículo</button>
+    </div>
+
+    <div id="personaForm" class="form-container">
+        <form onsubmit="handleSubmitPersona(event)">
+            <div class="form-row">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label for="empresa">Empresa</label>
+                        <input type="text" id="empresa" required>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label for="nombres">Nombres</label>
+                        <input type="text" id="nombres" required>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label for="apellidos">Apellidos</label>
+                        <input type="text" id="apellidos" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label for="tipoDocumento">Tipo de Documento</label>
+                        <select id="tipoDocumento" required>
+                            <option value="DNI">DNI</option>
+                            <option value="CE">Carnet de Extranjería</option>
+                            <option value="PAS">Pasaporte</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label for="documento">Documento</label>
+                        <input type="text" id="documento" name="documento" required>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label for="sexo">Sexo</label>
+                        <select id="sexo" required>
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="celular">Celular</label>
+                <input type="tel" id="celular" name="celular" pattern="[0-9]{9}" title="Ingrese un número de celular válido de 9 dígitos">
+            </div>
+
+            <div class="form-group">
+                <label for="correo">Correo electrónico</label>
+                <input type="email" id="correo" name="correo">
+            </div>
+
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="esConductor" onchange="toggleConductorFields()">
+                    Es conductor
+                </label>
+            </div>
+
+            <div id="conductorFields" style="display: none;">
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="brevete">Número de Brevete</label>
+                            <input type="text" id="brevete">
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="vencimientoBrevete">Vencimiento de Brevete</label>
+                            <input type="date" id="vencimientoBrevete">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label for="vencimientoSCTR">Vencimiento de SCTR</label>
+                        <input type="date" id="vencimientoSCTR" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label for="ingresaVehiculo">¿Ingresa con vehículo?</label>
+                        <select id="ingresaVehiculo" onchange="toggleVehiculoFields()" required>
+                            <option value="no">No</option>
+                            <option value="si">Sí</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="vehiculoFields" style="display: none;">
+                <div class="form-group">
+                    <label for="placaTracto">Placa de Tracto</label>
+                    <input type="text" id="placaTracto">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="documentacion">Documentación</label>
+                <div class="upload-container">
+                    <button type="button" onclick="openCloudinaryUploader('persona')" class="upload-button">
+                        <span>Subir Documentos</span>
+                    </button>
+                    <div id="preview-persona" class="preview-container"></div>
+                    <input type="hidden" id="documentacion-persona" name="documentacion">
+                </div>
+            </div>
+
+            <button type="submit" class="submit-button">
+                <span class="spinner"></span>
+                <span class="button-text">Registrar Persona</span>
+            </button>
+        </form>
+    </div>
+
+    <div id="vehiculoForm" class="form-container" style="display: none;">
+        <form onsubmit="handleSubmitVehiculo(event)">
+            <!-- Formulario de vehículo -->
+            <div class="form-row">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label for="empresaVehiculo">Empresa</label>
+                        <input type="text" id="empresaVehiculo" required>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label for="placaTractoVehiculo">Placa de Tracto</label>
+                        <input type="text" id="placaTractoVehiculo" required>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label for="placaCarreta">Placa de Carreta</label>
+                        <input type="text" id="placaCarreta" required>
+                        <small>Escriba "No aplica" si no corresponde</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label for="numeroSOAT">Número de SOAT</label>
+                        <input type="text" id="numeroSOAT" required>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label for="vencimientoSOAT">Vencimiento de SOAT</label>
+                        <input type="date" id="vencimientoSOAT" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label for="numeroTarjetaPropiedad">Número de Tarjeta de Propiedad</label>
+                        <input type="text" id="numeroTarjetaPropiedad" required>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label for="fechaTarjetaPropiedad">Fecha de Tarjeta de Propiedad</label>
+                        <input type="date" id="fechaTarjetaPropiedad" required>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label for="vencimientoRevisionTecnica">Vencimiento de Revisión Técnica</label>
+                        <input type="date" id="vencimientoRevisionTecnica" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="documentacion">Documentación</label>
+                <div class="upload-container">
+                    <button type="button" onclick="openCloudinaryUploader('vehiculo')" class="upload-button">
+                        <span>Subir Documentos</span>
+                    </button>
+                    <div id="preview-vehiculo" class="preview-container"></div>
+                    <input type="hidden" id="documentacion-vehiculo" name="documentacion">
+                </div>
+            </div>
+
+            <button type="submit" class="submit-button">
+                <span class="spinner"></span>
+                <span class="button-text">Registrar Vehículo</span>
+            </button>
+        </form>
+    </div>
+
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userSession = JSON.parse(localStorage.getItem('userSession'));
+            if (userSession && userSession.logo) {
+                document.getElementById('clientLogo').src = userSession.logo;
+            }
+        });
+
+        function showForm(type) {
+            const personaForm = document.getElementById('personaForm');
+            const vehiculoForm = document.getElementById('vehiculoForm');
+            const buttons = document.querySelectorAll('.tab-button');
+            
+            if (type === 'persona') {
+                personaForm.style.display = 'block';
+                vehiculoForm.style.display = 'none';
+                buttons[0].classList.add('active');
+                buttons[1].classList.remove('active');
+            } else {
+                personaForm.style.display = 'none';
+                vehiculoForm.style.display = 'block';
+                buttons[0].classList.remove('active');
+                buttons[1].classList.add('active');
+            }
+        }
+
+        function toggleVehiculoFields() {
+            const ingresaVehiculo = document.getElementById('ingresaVehiculo');
+            const vehiculoFields = document.getElementById('vehiculoFields');
+            const placaTracto = document.getElementById('placaTracto');
+            
+            if (ingresaVehiculo.value === 'si') {
+                vehiculoFields.style.display = 'block';
+                placaTracto.required = true;
+                placaTracto.value = '';
+            } else {
+                vehiculoFields.style.display = 'none';
+                placaTracto.required = false;
+                placaTracto.value = '';
+            }
+        }
+
+        function toggleConductorFields() {
+            const esConductor = document.getElementById('esConductor');
+            const conductorFields = document.getElementById('conductorFields');
+            const brevete = document.getElementById('brevete');
+            const vencimientoBrevete = document.getElementById('vencimientoBrevete');
+            
+            if (esConductor.checked) {
+                conductorFields.style.display = 'block';
+                brevete.required = true;
+                vencimientoBrevete.required = true;
+            } else {
+                conductorFields.style.display = 'none';
+                brevete.required = false;
+                vencimientoBrevete.required = false;
+                brevete.value = '';
+                vencimientoBrevete.value = '';
+            }
+        }
+
+        class ButtonSpinner {
+            constructor(button) {
+                this.button = button;
+                const textElement = button.querySelector('.button-text');
+                this.originalText = textElement ? textElement.textContent : button.textContent;
+            }
+
+            setLoading(isLoading) {
+                if (isLoading) {
+                    this.button.classList.add('loading');
+                    this.button.disabled = true;
+                } else {
+                    this.button.classList.remove('loading');
+                    this.button.disabled = false;
+                }
+            }
+        }
+
+        class Toast {
+            static show(message, type = 'info', duration = 3000) {
+                const container = document.querySelector('.toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+
+                container.appendChild(toast);
+                
+                // Forzar un reflow para que la animación funcione
+                toast.offsetHeight;
+                
+                // Mostrar el toast
+                requestAnimationFrame(() => {
+                    toast.classList.add('show');
+                });
+
+                // Eliminar el toast después de la duración especificada
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        container.removeChild(toast);
+                    }, 300);
+                }, duration);
+            }
+        }
+
+        async function handleSubmitPersona(event) {
+            event.preventDefault();
+            const button = event.target.querySelector('button');
+            const buttonSpinner = new ButtonSpinner(button);
+            buttonSpinner.setLoading(true);
+            
+            try {
+                const userSession = JSON.parse(localStorage.getItem('userSession'));
+                const formData = {
+                    action: 'registrarPersona',
+                    cliente: userSession.cliente,
+                    empresa: document.getElementById('empresa').value,
+                    nombres: document.getElementById('nombres').value,
+                    apellidos: document.getElementById('apellidos').value,
+                    tipoDocumento: document.getElementById('tipoDocumento').value,
+                    documento: document.getElementById('documento').value,
+                    sexo: document.getElementById('sexo').value,
+                    celular: document.getElementById('celular').value,
+                    correo: document.getElementById('correo').value,
+                    esConductor: document.getElementById('esConductor').checked ? 'si' : 'no',
+                    brevete: document.getElementById('brevete').value,
+                    vencimientoBrevete: document.getElementById('vencimientoBrevete').value,
+                    vencimientoSCTR: document.getElementById('vencimientoSCTR').value,
+                    ingresaVehiculo: document.getElementById('ingresaVehiculo').value,
+                    placaTracto: document.getElementById('placaTracto').value,
+                    usuario_registro: userSession.nombres,
+                    documentacion: document.getElementById('documentacion-persona').value
+                };
+
+                const response = await fetch('https://script.google.com/macros/s/AKfycbyl4Q1-rB1pfnAU-0d4zcI9qBbXE5_niag4HhZqjmhYgAdbdU662rEpBQqF9lcLCQF6Bg/exec', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(formData)
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    Toast.show('Registro exitoso', 'success');
+                    event.target.reset();
+                    document.getElementById('preview-persona').innerHTML = '';
+                    document.getElementById('documentacion-persona').value = '';
+                } else {
+                    throw new Error(result.message || 'Error al registrar');
+                }
+            } catch (error) {
+                Toast.show(error.message, 'error');
+            } finally {
+                buttonSpinner.setLoading(false);
+            }
+        }
+
+        async function handleSubmitVehiculo(event) {
+            event.preventDefault();
+            const button = event.target.querySelector('button');
+            const buttonSpinner = new ButtonSpinner(button);
+            buttonSpinner.setLoading(true);
+            
+            try {
+                const userSession = JSON.parse(localStorage.getItem('userSession'));
+                const formData = {
+                    action: 'registrarVehiculo',
+                    empresa: document.getElementById('empresaVehiculo').value,
+                    placaTracto: document.getElementById('placaTractoVehiculo').value,
+                    placaCarreta: document.getElementById('placaCarreta').value,
+                    numeroSOAT: document.getElementById('numeroSOAT').value,
+                    vencimientoSOAT: document.getElementById('vencimientoSOAT').value,
+                    numeroTarjetaPropiedad: document.getElementById('numeroTarjetaPropiedad').value,
+                    fechaTarjetaPropiedad: document.getElementById('fechaTarjetaPropiedad').value,
+                    vencimientoRevisionTecnica: document.getElementById('vencimientoRevisionTecnica').value,
+                    usuario_registro: userSession.nombres,
+                    cliente: userSession.cliente,
+                    documentacion: document.getElementById('documentacion-vehiculo').value
+                };
+
+                const response = await fetch('https://script.google.com/macros/s/AKfycbyl4Q1-rB1pfnAU-0d4zcI9qBbXE5_niag4HhZqjmhYgAdbdU662rEpBQqF9lcLCQF6Bg/exec', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(formData)
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    Toast.show('Registro exitoso', 'success');
+                    event.target.reset();
+                    document.getElementById('preview-vehiculo').innerHTML = '';
+                    document.getElementById('documentacion-vehiculo').value = '';
+                } else {
+                    throw new Error(result.message || 'Error al registrar');
+                }
+            } catch (error) {
+                Toast.show(error.message, 'error');
+            } finally {
+                buttonSpinner.setLoading(false);
+            }
+        }
+
+        let cloudinaryWidget;
+
+        function createCloudinaryWidget(tipo) {
+            return cloudinary.createUploadWidget({
+                cloudName: 'dzbg2op4x',
+                uploadPreset: 'ml_default',
+                sources: ['local', 'camera', 'url'],
+                multiple: false,
+                maxFiles: 1,
+                maxFileSize: 5000000,
+                language: 'es'
+            }, (error, result) => {
+                if (!error && result && result.event === "success") {
+                    const imageUrl = result.info.secure_url;
+                    document.getElementById(`documentacion-${tipo}`).value = imageUrl;
+                    
+                    const previewContainer = document.getElementById(`preview-${tipo}`);
+                    previewContainer.innerHTML = `
+                        <div class="preview-item">
+                            <img src="${imageUrl}" alt="Documento">
+                            <button onclick="removeDocument('${tipo}')" class="remove-button">
+                                <i class="material-icons">close</i>
+                            </button>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function openCloudinaryUploader(tipo) {
+            cloudinaryWidget = createCloudinaryWidget(tipo);
+            cloudinaryWidget.open();
+        }
+
+        function removeDocument(tipo) {
+            document.getElementById(`documentacion-${tipo}`).value = '';
+            document.getElementById(`preview-${tipo}`).innerHTML = '';
+        }
+    </script>
+</body>
+</html> 

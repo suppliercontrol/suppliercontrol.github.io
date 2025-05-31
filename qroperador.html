@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Códigos QR - Usuarios</title>
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --goes-orange: #FF6634;
+            --goes-gray: #f5f5f5;
+            --goes-dark: #333333;
+        }
+
+        body {
+            font-family: 'Titillium Web', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: white;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin: 20px 0;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            min-width: 1200px;
+        }
+
+        th {
+            background: var(--goes-gray);
+            padding: 8px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--goes-dark);
+            border-bottom: 2px solid #eee;
+            font-size: 0.9rem;
+        }
+
+        td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+            color: var(--goes-dark);
+            white-space: nowrap;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        tr:hover {
+            background-color: #f8f8f8;
+        }
+
+        .qr-button {
+            background: var(--goes-orange);
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Titillium Web', sans-serif;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            height: 28px;
+        }
+
+        .qr-button:hover {
+            background: #e55a2d;
+        }
+
+        .qr-button i {
+            font-size: 16px;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .qr-container {
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            min-height: fit-content;
+        }
+
+        #qrCode {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .qr-footer {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .qr-footer p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .qr-goes-logo {
+            height: 25px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--goes-dark);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--goes-dark);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .form-actions {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .save-button {
+            background: var(--goes-orange);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-family: inherit;
+        }
+
+        .save-button:hover {
+            background: #e55a2d;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--goes-dark);
+        }
+
+        /* Estilos para el toast */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            min-width: 280px;
+            padding: 16px 20px;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .toast::before {
+            font-family: 'Material Icons';
+            font-size: 24px;
+        }
+
+        .toast.success {
+            border-left: 4px solid #4CAF50;
+        }
+
+        .toast.success::before {
+            content: 'check_circle';
+            color: #4CAF50;
+        }
+
+        .toast.error {
+            border-left: 4px solid #F44336;
+        }
+
+        .toast.error::before {
+            content: 'error';
+            color: #F44336;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            border: none;
+            background: var(--goes-gray);
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Titillium Web', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background: var(--goes-orange);
+            color: white;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            padding: 4px;
+        }
+
+        .action-buttons button {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            color: #666;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .edit-button:hover {
+            background: #f0f0f0;
+            color: #2196F3;
+            border-color: #2196F3;
+        }
+
+        .qr-button:hover {
+            background: #f0f0f0;
+            color: #4CAF50;
+            border-color: #4CAF50;
+        }
+
+        .user-button:hover {
+            background: #f0f0f0;
+            color: #9C27B0;
+            border-color: #9C27B0;
+        }
+
+        .pdf-button:hover {
+            background: #f0f0f0;
+            color: #FF6634;
+            border-color: #FF6634;
+        }
+
+        .action-buttons button i {
+            font-size: 18px;
+        }
+
+        /* Efecto de click */
+        .action-buttons button:active {
+            transform: scale(0.95);
+        }
+
+        /* Spinner existente */
+        .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            position: absolute;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Ajustar los anchos de las columnas */
+        table th:nth-child(1) { /* Empresa */
+            width: 18%;
+        }
+        table th:nth-child(2) { /* Nombres */
+            width: 15%;
+        }
+        table th:nth-child(3) { /* Apellidos */
+            width: 15%;
+        }
+        table th:nth-child(4) { /* Documento */
+            width: 12%;
+        }
+        table th:nth-child(5) { /* Celular */
+            width: 10%;
+        }
+        table th:last-child, 
+        table td:last-child {
+            width: 160px !important;  /* Forzar un ancho fijo más grande */
+            min-width: 160px !important;
+        }
+
+        /* Estilos para el header con logo */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            height: 50px;
+        }
+
+        .switch-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #4CAF50;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+
+        input:checked + .slider {
+            background-color: #f44336;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        .slider.round {
+            border-radius: 24px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+        .switch-label {
+            font-size: 0.8rem;
+            color: var(--goes-dark);
+        }
+
+        /* Estilos para el botón de comentario */
+        .comment-button { 
+            background: #2196F3; 
+            color: white; 
+        }
+
+        .comment-button:hover { 
+            background: #1976D2; 
+        }
+
+        /* Asegurar que la tabla tenga scroll horizontal */
+        .table-container {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        .filters-container {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .filter-input:focus {
+            border-color: #FF6634;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255,102,52,0.1);
+        }
+
+        .filter-input::placeholder {
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img id="clientLogo" alt="Logo del Cliente" class="logo">
+    </div>
+    <div class="tabs">
+        <button class="tab-button active" onclick="switchTab('personas')">Personas</button>
+        <button class="tab-button" onclick="switchTab('vehiculos')">Vehículos</button>
+    </div>
+
+    <div class="filters-container">
+        <div class="filter-group" id="filterGroup">
+            <!-- Los filtros se generarán aquí -->
+        </div>
+    </div>
+
+    <div id="personasTable" class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Empresa</th>
+                    <th>Nombres</th>
+                    <th>Apellidos</th>
+                    <th>Tipo Documento</th>
+                    <th>Documento</th>
+                    <th>Sexo</th>
+                    <th>Celular</th>
+                    <th>Correo</th>
+                    <th>Brevete</th>
+                    <th>Venc. Brevete</th>
+                    <th>Venc. SCTR</th>
+                    <th>Ingresa Vehículo</th>
+                    <th>Placa Tracto</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody">
+                <!-- Se llenará dinámicamente -->
+            </tbody>
+        </table>
+    </div>
+
+    <div id="vehiculosTable" class="table-container" style="display: none;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Empresa</th>
+                    <th>Placa Tracto</th>
+                    <th>Placa Carreta</th>
+                    <th>N° SOAT</th>
+                    <th>Venc. SOAT</th>
+                    <th>N° Tarjeta Prop.</th>
+                    <th>Fecha Tarjeta</th>
+                    <th>Venc. Rev. Técnica</th>
+                    <th>Fecha Registro</th>
+                    <th>Usuario Registro</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="vehiclesTableBody">
+                <!-- Se llenará dinámicamente -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal para mostrar QR -->
+    <div id="qrModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Código QR de Acceso</h2>
+                <button class="close-button" onclick="closeModal('qrModal')">&times;</button>
+            </div>
+            <div class="qr-container">
+                <div id="qrCode"></div>
+                <div class="qr-footer">
+                    <p>Suppliers Control | Powered by</p>
+                    <img src="https://goesperu.com/wp-content/uploads/2024/08/771x216.png" alt="GOES Logo" class="qr-goes-logo">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="save-button" onclick="downloadQR()">
+                    <i class="material-icons">download</i>
+                    <span class="button-text">Descargar QR</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar persona -->
+    <div id="editPersonModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Persona</h3>
+                <button class="close-button" onclick="closeModal('editPersonModal')">&times;</button>
+            </div>
+            <form id="editPersonForm" onsubmit="handleEditSubmit(event)">
+                <input type="hidden" name="id">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="empresa">Empresa</label>
+                        <input type="text" name="empresa" id="empresa" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nombres">Nombres</label>
+                        <input type="text" name="nombres" id="nombres" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="apellidos">Apellidos</label>
+                        <input type="text" name="apellidos" id="apellidos" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tipoDocumento">Tipo Documento</label>
+                        <select name="tipoDocumento" id="tipoDocumento" required>
+                            <option value="DNI">DNI</option>
+                            <option value="CE">Carnet Extranjería</option>
+                            <option value="PAS">Pasaporte</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="documento">Documento</label>
+                        <input type="text" name="documento" id="documento" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="sexo">Sexo</label>
+                        <select name="sexo" id="sexo" required>
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="celular">Celular</label>
+                        <input type="text" name="celular" id="celular">
+                    </div>
+                    <div class="form-group">
+                        <label for="correo">Correo Electrónico</label>
+                        <input type="email" name="correo" id="correo">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="brevete">Número de Brevete</label>
+                        <input type="text" name="brevete" id="brevete">
+                    </div>
+                    <div class="form-group">
+                        <label for="vencimientoBrevete">Vencimiento Brevete</label>
+                        <input type="date" name="vencimientoBrevete" id="vencimientoBrevete">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="vencimientoSCTR">Vencimiento SCTR</label>
+                        <input type="date" name="vencimientoSCTR" id="vencimientoSCTR">
+                    </div>
+                    <div class="form-group">
+                        <label for="ingresaVehiculo">Ingresa Vehículo</label>
+                        <select name="ingresaVehiculo" id="ingresaVehiculo">
+                            <option value="si">Sí</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="placaTracto">Placa Tracto</label>
+                        <input type="text" name="placaTracto" id="placaTracto">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="save-button">
+                        <span class="spinner"></span>
+                        <i class="material-icons">save</i>
+                        <span class="button-text">Guardar Cambios</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para editar vehículo -->
+    <div id="editVehicleModal" class="modal edit-modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeEditModal('editVehicleModal')">&times;</button>
+            <h3>Editar Vehículo</h3>
+            <form class="edit-form" id="editVehicleForm" onsubmit="handleEditVehicle(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editVehiculoEmpresa">Empresa</label>
+                        <input type="text" id="editVehiculoEmpresa" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editVehiculoPlacaTracto">Placa de Tracto</label>
+                        <input type="text" id="editVehiculoPlacaTracto" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editVehiculoPlacaCarreta">Placa de Carreta</label>
+                        <input type="text" id="editVehiculoPlacaCarreta" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editVehiculoNumeroSOAT">Número de SOAT</label>
+                        <input type="text" id="editVehiculoNumeroSOAT" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editVehiculoVencSOAT">Vencimiento de SOAT</label>
+                        <input type="date" id="editVehiculoVencSOAT" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editVehiculoNumeroTarjeta">Número de Tarjeta de Propiedad</label>
+                        <input type="text" id="editVehiculoNumeroTarjeta" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editVehiculoFechaTarjeta">Fecha de Tarjeta de Propiedad</label>
+                        <input type="date" id="editVehiculoFechaTarjeta" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editVehiculoVencRevTec">Vencimiento de Revisión Técnica</label>
+                        <input type="date" id="editVehiculoVencRevTec" required>
+                    </div>
+                </div>
+                <input type="hidden" id="editVehicleId">
+                <div class="buttons">
+                    <button type="button" class="cancel-button" onclick="closeEditModal('editVehicleModal')">Cancelar</button>
+                    <button type="submit" class="save-button">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para el motivo -->
+    <div id="reasonModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Motivo de No Autorización</h2>
+                <button class="close-button" onclick="closeReasonModal()">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
+            <div class="form-group">
+                <label for="reasonText">Ingrese el motivo:</label>
+                <textarea id="reasonText" rows="4" required></textarea>
+            </div>
+            <div class="form-actions">
+                <button class="save-button" onclick="saveUnauthorization()">
+                    <i class="material-icons">save</i>
+                    Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let users = []; // Variable global para almacenar los usuarios
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUsers();
+            loadClientLogo();
+            generateFilters('personas'); // Llamar a generateFilters al cargar la página
+        });
+
+        function loadClientLogo() {
+            const userSession = JSON.parse(localStorage.getItem('userSession'));
+            if (userSession && userSession.logo) {
+                document.getElementById('clientLogo').src = userSession.logo;
+            } else {
+                document.getElementById('clientLogo').style.display = 'none';
+            }
+        }
+
+        async function loadUsers() {
+            const userSession = JSON.parse(localStorage.getItem('userSession'));
+            try {
+                const response = await fetch('https://script.google.com/macros/s/AKfycbyl4Q1-rB1pfnAU-0d4zcI9qBbXE5_niag4HhZqjmhYgAdbdU662rEpBQqF9lcLCQF6Bg/exec', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'action': 'getUsers',
+                        'cliente': userSession.cliente
+                    })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    users = result.data; // Asignar los datos a la variable global
+                    console.log("Usuarios cargados:", users); // Para debug
+                    displayUsers(users);
+                } else {
+                    throw new Error(result.message || 'Error al cargar usuarios');
+                }
+            } catch (error) {
+                console.error(error);
+                document.getElementById('usersTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="14" class="empty-state">
+                            <p>Error al cargar los usuarios. Por favor, intente más tarde.</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function displayUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            if (!users || users.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="14" class="empty-state">
+                            <p>No hay personas registradas.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = users.map(user => {
+                const vencBrevete = user.vencimientoBrevete ? new Date(user.vencimientoBrevete).toLocaleDateString() : '-';
+                const vencSCTR = user.vencimientoSCTR ? new Date(user.vencimientoSCTR).toLocaleDateString() : '-';
+                
+                return `
+                    <tr>
+                        <td>${user.empresa || '-'}</td>
+                        <td>${user.nombres || '-'}</td>
+                        <td>${user.apellidos || '-'}</td>
+                        <td>${user.tipoDocumento || '-'}</td>
+                        <td>${user.documento || '-'}</td>
+                        <td>${user.sexo || '-'}</td>
+                        <td>${user.celular || '-'}</td>
+                        <td>${user.correo || '-'}</td>
+                        <td>${user.brevete || '-'}</td>
+                        <td>${vencBrevete}</td>
+                        <td>${vencSCTR}</td>
+                        <td>${user.ingresaVehiculo || '-'}</td>
+                        <td>${user.placaTracto || '-'}</td>
+                        <td class="action-buttons">
+                            <button class="edit-button" onclick="showEditModal('${user.id}')" title="Editar">
+                                <i class="material-icons">edit</i>
+                            </button>
+                            <button class="qr-button" onclick="showQR('${user.id}')" title="Ver QR">
+                                <i class="material-icons">qr_code</i>
+                            </button>
+                            <button class="user-button" onclick="createUser('${user.id}')" title="Crear Usuario">
+                                <span class="spinner"></span>
+                                <i class="material-icons">person_add</i>
+                            </button>
+                            <button class="pdf-button" onclick="generatePDF('${user.nombres}', '${user.apellidos}', '${user.empresa}', '${user.documento}', '${user.celular}')" title="Descargar Credenciales">
+                                <i class="material-icons">picture_as_pdf</i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function showEditModal(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+
+            const modal = document.getElementById('editPersonModal');
+            const form = document.getElementById('editPersonForm');
+
+            // Llenar el formulario con los datos actuales
+            form.querySelector('[name="id"]').value = user.id;
+            form.querySelector('[name="empresa"]').value = user.empresa || '';
+            form.querySelector('[name="nombres"]').value = user.nombres || '';
+            form.querySelector('[name="apellidos"]').value = user.apellidos || '';
+            form.querySelector('[name="tipoDocumento"]').value = user.tipoDocumento || '';
+            form.querySelector('[name="documento"]').value = user.documento || '';
+            form.querySelector('[name="sexo"]').value = user.sexo || '';
+            form.querySelector('[name="celular"]').value = user.celular || '';
+            form.querySelector('[name="correo"]').value = user.correo || '';
+            form.querySelector('[name="brevete"]').value = user.brevete || '';
+            form.querySelector('[name="vencimientoBrevete"]').value = user.vencimientoBrevete ? formatDateForInput(user.vencimientoBrevete) : '';
+            form.querySelector('[name="vencimientoSCTR"]').value = user.vencimientoSCTR ? formatDateForInput(user.vencimientoSCTR) : '';
+            form.querySelector('[name="ingresaVehiculo"]').value = user.ingresaVehiculo || '';
+            form.querySelector('[name="placaTracto"]').value = user.placaTracto || '';
+
+            modal.classList.add('show');
+        }
+
+        function formatDateForInput(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        async function handleEditSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const button = form.querySelector('button[type="submit"]');
+            const buttonSpinner = new ButtonSpinner(button);
+            buttonSpinner.setLoading(true);
+
+            try {
+                const userSession = JSON.parse(localStorage.getItem('userSession'));
+                const formData = {
+                    action: 'updatePerson',
+                    id: form.querySelector('[name="id"]').value,
+                    empresa: form.querySelector('[name="empresa"]').value,
+                    nombres: form.querySelector('[name="nombres"]').value,
+                    apellidos: form.querySelector('[name="apellidos"]').value,
+                    tipoDocumento: form.querySelector('[name="tipoDocumento"]').value,
+                    documento: form.querySelector('[name="documento"]').value,
+                    sexo: form.querySelector('[name="sexo"]').value,
+                    celular: form.querySelector('[name="celular"]').value,
+                    correo: form.querySelector('[name="correo"]').value,
+                    brevete: form.querySelector('[name="brevete"]').value,
+                    vencimientoBrevete: form.querySelector('[name="vencimientoBrevete"]').value,
+                    vencimientoSCTR: form.querySelector('[name="vencimientoSCTR"]').value,
+                    ingresaVehiculo: form.querySelector('[name="ingresaVehiculo"]').value,
+                    placaTracto: form.querySelector('[name="placaTracto"]').value,
+                    cliente: userSession.cliente
+                };
+
+                const response = await fetch('https://script.google.com/macros/s/AKfycbyl4Q1-rB1pfnAU-0d4zcI9qBbXE5_niag4HhZqjmhYgAdbdU662rEpBQqF9lcLCQF6Bg/exec', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(formData).toString()
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    Toast.show('Datos actualizados correctamente', 'success');
+                    closeModal('editPersonModal');
+                    await loadUsers(); // Recargar la tabla
+                } else {
+                    throw new Error(result.message || 'Error al actualizar');
+                }
+            } catch (error) {
+                Toast.show(error.message, 'error');
+            } finally {
+                buttonSpinner.setLoading(false);
+            }
+        }
+
+        function showQR(userId) {
+            const modal = document.getElementById('qrModal');
+            const qrContainer = document.getElementById('qrCode');
+            
+            // Limpiar contenedor anterior
+            qrContainer.innerHTML = '';
+            
+            // Generar QR
+            new QRCode(qrContainer, {
+                text: userId,
+                width: 256,
+                height: 256,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            modal.classList.add('show');
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('show');
+            }
+        }
+
+        function downloadQR() {
+            const qrContainer = document.querySelector('.qr-container');
+            try {
+                html2canvas(qrContainer, {
+                    backgroundColor: 'white',
+                    scale: 2,
+                    height: qrContainer.offsetHeight,
+                    useCORS: true,
+                    allowTaint: true,
+                    logging: false
+                }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = 'qr-acceso.png';
+                    link.href = canvas.toDataURL('image/png', 1.0);
+                    link.click();
+                });
+            } catch (error) {
+                console.error('Error al generar la imagen:', error);
+                Toast.show('Error al generar la imagen', 'error');
+            }
+        }
+
+        function switchTab(tipo) {
+            // Actualizar botones
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(button => {
+                button.classList.toggle('active', button.textContent.toLowerCase().includes(tipo));
+            });
+
+            // Mostrar/ocultar tablas
+            document.getElementById('personasTable').style.display = tipo === 'personas' ? 'block' : 'none';
+            document.getElementById('vehiculosTable').style.display = tipo === 'vehiculos' ? 'block' : 'none';
+
+            // Generar filtros correspondientes
+            generateFilters(tipo);
+
+            // Cargar datos si es necesario
+            if (tipo === 'personas') {
+                loadUsers();
+            } else {
+                loadVehicles();
+            }
+        }
+
+        async function loadVehicles() {
+            try {
+                const userSession = JSON.parse(localStorage.getItem('userSession'));
+                const response = await fetch('https://script.google.com/macros/s/AKfycbyl4Q1-rB1pfnAU-0d4zcI9qBbXE5_niag4HhZqjmhYgAdbdU662rEpBQqF9lcLCQF6Bg/exec', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'action': 'getVehicles',
+                        'cliente': userSession.cliente
+                    })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    displayVehicles(result.data);
+                } else {
+                    throw new Error(result.message || 'Error al cargar vehículos');
+                }
+            } catch (error) {
+                console.error(error);
+                document.getElementById('vehiclesTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="11" class="empty-state">
+                            <p>Error al cargar los vehículos. Por favor, intente más tarde.</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function displayVehicles(vehicles) {
+            const tbody = document.getElementById('vehiclesTableBody');
+            if (!vehicles || vehicles.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="11" class="empty-state">
+                            <p>No hay vehículos registrados.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = vehicles.map(vehicle => {
+                const vencSOAT = vehicle.vencimientoSOAT ? new Date(vehicle.vencimientoSOAT).toLocaleDateString() : '-';
+                const fechaTarjeta = vehicle.fechaTarjetaPropiedad ? new Date(vehicle.fechaTarjetaPropiedad).toLocaleDateString() : '-';
+                const vencRevTec = vehicle.vencimientoRevisionTecnica ? new Date(vehicle.vencimientoRevisionTecnica).toLocaleDateString() : '-';
+                const fechaRegistro = vehicle.fecha_registro ? new Date(vehicle.fecha_registro).toLocaleDateString() : '-';
+                
+                return `
+                    <tr>
+                        <td>${vehicle.empresa || '-'}</td>
+                        <td>${vehicle.placaTracto || '-'}</td>
+                        <td>${vehicle.placaCarreta || '-'}</td>
+                        <td>${vehicle.numeroSOAT || '-'}</td>
+                        <td>${vencSOAT}</td>
+                        <td>${vehicle.numeroTarjetaPropiedad || '-'}</td>
+                        <td>${fechaTarjeta}</td>
+                        <td>${vencRevTec}</td>
+                        <td>${fechaRegistro}</td>
+                        <td>${vehicle.usuario_registro || '-'}</td>
+                        <td class="action-buttons">
+                            <button class="qr-button" onclick="showQR('${vehicle.id}')" title="Ver QR">
+                                <i class="material-icons">qr_code</i>
+                            </button>
+                            <button class="edit-button" onclick="showEditVehicle('${vehicle.id}')" title="Editar">
+                                <i class="material-icons">edit</i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function showEditVehicle(vehicleId) {
+            const vehicle = findVehicleById(vehicleId);
+            if (!vehicle) return;
+
+            // Llenar el formulario con los datos actuales
+            document.getElementById('editVehiculoEmpresa').value = vehicle.empresa || '';
+            document.getElementById('editVehiculoPlacaTracto').value = vehicle.placaTracto || '';
+            document.getElementById('editVehiculoPlacaCarreta').value = vehicle.placaCarreta || '';
+            document.getElementById('editVehiculoNumeroSOAT').value = vehicle.numeroSOAT || '';
+            document.getElementById('editVehiculoVencSOAT').value = formatDateForInput(vehicle.vencimientoSOAT);
+            document.getElementById('editVehiculoNumeroTarjeta').value = vehicle.numeroTarjetaPropiedad || '';
+            document.getElementById('editVehiculoFechaTarjeta').value = formatDateForInput(vehicle.fechaTarjetaPropiedad);
+            document.getElementById('editVehiculoVencRevTec').value = formatDateForInput(vehicle.vencimientoRevisionTecnica);
+            document.getElementById('editVehicleId').value = vehicle.id;
+
+            // Mostrar el modal
+            document.getElementById('editVehicleModal').classList.add('show');
+        }
+
+        function closeEditModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        function toggleEditConductorFields() {
+            const esConductor = document.getElementById('editEsConductor');
+            const conductorFields = document.getElementById('editConductorFields');
+            const brevete = document.getElementById('editBrevete');
+            const vencBrevete = document.getElementById('editVencBrevete');
+            
+            if (esConductor.checked) {
+                conductorFields.style.display = 'block';
+                brevete.required = true;
+                vencBrevete.required = true;
+            } else {
+                conductorFields.style.display = 'none';
+                brevete.required = false;
+                vencBrevete.required = false;
+                brevete.value = '';
+                vencBrevete.value = '';
+            }
+        }
+
+        function toggleEditVehiculoFields() {
+            const ingresaVehiculo = document.getElementById('editIngresaVehiculo');
+            const vehiculoFields = document.getElementById('editVehiculoFields');
+            const placaTracto = document.getElementById('editPlacaTracto');
+            
+            if (ingresaVehiculo.value === 'si') {
+                vehiculoFields.style.display = 'block';
+                placaTracto.required = true;
+            } else {
+                vehiculoFields.style.display = 'none';
+                placaTracto.required = false;
+                placaTracto.value = '';
+            }
+        }
+
+        async function handleEditVehicle(event) {
+            event.preventDefault();
+            const button = event.target.querySelector('.save-button');
+            const buttonSpinner = new ButtonSpinner(button);
+            buttonSpinner.setLoading(true);
+
+            try {
+                const userSession = JSON.parse(localStorage.getItem('userSession'));
+                const formData = {
+                    action: 'updateVehicle',
+                    id: document.getElementById('editVehicleId').value,
+                    empresa: document.getElementById('editVehiculoEmpresa').value,
+                    placaTracto: document.getElementById('editVehiculoPlacaTracto').value,
+                    placaCarreta: document.getElementById('editVehiculoPlacaCarreta').value,
+                    numeroSOAT: document.getElementById('editVehiculoNumeroSOAT').value,
+                    vencimientoSOAT: document.getElementById('editVehiculoVencSOAT').value,
+                    numeroTarjetaPropiedad: document.getElementById('editVehiculoNumeroTarjeta').value,
+                    fechaTarjetaPropiedad: document.getElementById('editVehiculoFechaTarjeta').value,
+                    vencimientoRevisionTecnica: document.getElementById('editVehiculoVencRevTec').value,
+                    usuario_registro: userSession.nombres,
+                    cliente: userSession.cliente
+                };
+
+                const response = await fetch('https://script.google.com/macros/s/AKfycbyl4Q1-rB1pfnAU-0d4zcI9qBbXE5_niag4HhZqjmhYgAdbdU662rEpBQqF9lcLCQF6Bg/exec', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(formData)
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    closeEditModal('editVehicleModal');
+                    loadVehicles(); // Recargar la tabla
+                    showToast('Vehículo actualizado correctamente', 'success');
+                } else {
+                    throw new Error(result.message || 'Error al actualizar');
+                }
+            } catch (error) {
+                showToast(error.message, 'error');
+            } finally {
+                buttonSpinner.setLoading(false);
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+
+            const container = document.querySelector('.toast-container') || createToastContainer();
+            container.appendChild(toast);
+
+            // Forzar un reflow
+            toast.offsetHeight;
+
+            // Mostrar el toast
+            requestAnimationFrame(() => {
+                toast.classList.add('show');
+            });
+
+            // Eliminar después de 3 segundos
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => container.removeChild(toast), 3000);
+            }, 3000);
+        }
+
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+            return container;
+        }
+
+        // Funciones auxiliares para encontrar registros por ID
+        let currentUsers = [];
+        let currentVehicles = [];
+
+        function findUserById(id) {
+            return currentUsers.find(user => user.id === id);
+        }
+
+        function findVehicleById(id) {
+            return currentVehicles.find(vehicle => vehicle.id === id);
+        }
+
+        // Modificar las funciones displayUsers y displayVehicles para guardar los datos actuales
+        function displayUsers(users) {
+            currentUsers = users; // Guardar los datos actuales
+            const tbody = document.getElementById('usersTableBody');
+            if (!users || users.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="14" class="empty-state">
+                            <p>No hay personas registradas.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = users.map(user => {
+                const vencBrevete = user.vencimientoBrevete ? new Date(user.vencimientoBrevete).toLocaleDateString() : '-';
+                const vencSCTR = user.vencimientoSCTR ? new Date(user.vencimientoSCTR).toLocaleDateString() : '-';
+                
+                return `
+                    <tr>
+                        <td>${user.empresa || '-'}</td>
+                        <td>${user.nombres || '-'}</td>
+                        <td>${user.apellidos || '-'}</td>
+                        <td>${user.tipoDocumento || '-'}</td>
+                        <td>${user.documento || '-'}</td>
+                        <td>${user.sexo || '-'}</td>
+                        <td>${user.celular || '-'}</td>
+                        <td>${user.correo || '-'}</td>
+                        <td>${user.brevete || '-'}</td>
+                        <td>${vencBrevete}</td>
+                        <td>${vencSCTR}</td>
+                        <td>${user.ingresaVehiculo || '-'}</td>
+                        <td>${user.placaTracto || '-'}</td>
+                        <td class="action-buttons">
+                            <button class="edit-button" onclick="showEditModal('${user.id}')" title="Editar">
+                                <i class="material-icons">edit</i>
+                            </button>
+                            <button class="qr-button" onclick="showQR('${user.id}')" title="Ver QR">
+                                <i class="material-icons">qr_code</i>
+                            </button>
+                            <button class="user-button" onclick="createUser('${user.id}')" title="Crear Usuario">
+                                <span class="spinner"></span>
+                                <i class="material-icons">person_add</i>
+                            </button>
+                            <button class="pdf-button" onclick="generatePDF('${user.nombres}', '${user.apellidos}', '${user.empresa}', '${user.documento}', '${user.celular}')" title="Descargar Credenciales">
+                                <i class="material-icons">picture_as_pdf</i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function displayVehicles(vehicles) {
+            currentVehicles = vehicles; // Guardar los datos actuales
+            const tbody = document.getElementById('vehiclesTableBody');
+            if (!vehicles || vehicles.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="11" class="empty-state">
+                            <p>No hay vehículos registrados.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = vehicles.map(vehicle => {
+                const vencSOAT = vehicle.vencimientoSOAT ? new Date(vehicle.vencimientoSOAT).toLocaleDateString() : '-';
+                const fechaTarjeta = vehicle.fechaTarjetaPropiedad ? new Date(vehicle.fechaTarjetaPropiedad).toLocaleDateString() : '-';
+                const vencRevTec = vehicle.vencimientoRevisionTecnica ? new Date(vehicle.vencimientoRevisionTecnica).toLocaleDateString() : '-';
+                const fechaRegistro = vehicle.fecha_registro ? new Date(vehicle.fecha_registro).toLocaleDateString() : '-';
+                
+                return `
+                    <tr>
+                        <td>${vehicle.empresa || '-'}</td>
+                        <td>${vehicle.placaTracto || '-'}</td>
+                        <td>${vehicle.placaCarreta || '-'}</td>
+                        <td>${vehicle.numeroSOAT || '-'}</td>
+                        <td>${vencSOAT}</td>
+                        <td>${vehicle.numeroTarjetaPropiedad || '-'}</td>
+                        <td>${fechaTarjeta}</td>
+                        <td>${vencRevTec}</td>
+                        <td>${fechaRegistro}</td>
+                        <td>${vehicle.usuario_registro || '-'}</td>
+                        <td class="action-buttons">
+                            <button class="qr-button" onclick="showQR('${vehicle.id}')" title="Ver QR">
+                                <i class="material-icons">qr_code</i>
+                            </button>
+                            <button class="edit-button" onclick="showEditVehicle('${vehicle.id}')" title="Editar">
+                                <i class="material-icons">edit</i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        class ButtonSpinner {
+            constructor(buttonElement) {
+                this.button = buttonElement;
+            }
+
+            setLoading(loading) {
+                if (loading) {
+                    if (!this.button.querySelector('.button-spinner')) {
+                        this.setupButton();
+                    }
+                    this.button.classList.add('loading');
+                    this.button.disabled = true;
+                } else {
+                    this.button.classList.remove('loading');
+                    this.button.disabled = false;
+                }
+            }
+
+            setupButton() {
+                const originalText = this.button.textContent;
+                this.button.innerHTML = '';
+                
+                const textSpan = document.createElement('span');
+                textSpan.className = 'button-text';
+                textSpan.textContent = originalText;
+                
+                const spinner = document.createElement('div');
+                spinner.className = 'button-spinner';
+                
+                this.button.appendChild(textSpan);
+                this.button.appendChild(spinner);
+            }
+        }
+
+        let currentUserId = null;
+        let currentSwitchElement = null;
+
+        function toggleAuthorization(userId, checked) {
+            currentUserId = userId;
+            currentSwitchElement = event.target;
+
+            if (checked) {
+                // Si está activando el switch (No Autorizado)
+                document.getElementById('reasonModal').classList.add('show');
+            } else {
+                // Si está desactivando el switch (Autorizado)
+                updateAuthorization(userId, 'Autorizado', '')
+                    .then(() => {
+                        // Actualizar el label junto al switch
+                        const switchLabel = currentSwitchElement.closest('.switch-container').querySelector('.switch-label');
+                        if (switchLabel) {
+                            switchLabel.textContent = 'Autorizado';
+                        }
+                    })
+                    .catch(() => {
+                        // Si hay error, revertir el switch
+                        currentSwitchElement.checked = true;
+                    });
+            }
+        }
+
+        function closeReasonModal() {
+            document.getElementById('reasonModal').classList.remove('show');
+            if (currentSwitchElement) {
+                currentSwitchElement.checked = false;
+            }
+        }
+
+        async function saveUnauthorization() {
+            const button = document.querySelector('#reasonModal .save-button');
+            const buttonSpinner = new ButtonSpinner(button);
+            const reason = document.getElementById('reasonText').value.trim();
+            
+            if (!reason) {
+                Toast.show('Por favor ingrese un motivo', 'error');
+                return;
+            }
+
+            buttonSpinner.setLoading(true);
+            try {
+                await updateAuthorization(currentUserId, 'No Autorizado', reason);
+                Toast.show('Estado actualizado correctamente', 'success');
+                document.getElementById('reasonModal').classList.remove('show');
+                document.getElementById('reasonText').value = '';
+                
+                // Actualizar el label junto al switch
+                const switchLabel = currentSwitchElement.closest('.switch-container').querySelector('.switch-label');
+                if (switchLabel) {
+                    switchLabel.textContent = 'No Autorizado';
+                }
+                currentSwitchElement.checked = true; // Asegurar que el switch esté en rojo
+                
+                await loadUsers(); // Recargar la tabla
+            } catch (error) {
+                Toast.show(error.message || 'Error al actualizar estado', 'error');
+                currentSwitchElement.checked = false; // Revertir el switch si hay error
+            } finally {
+                buttonSpinner.setLoading(false);
+            }
+        }
+
+        async function updateAuthorization(userId, estado, motivo) {
+            const userSession = JSON.parse(localStorage.getItem('userSession'));
+            try {
+                const response = await fetch('https://script.google.com/macros/s/AKfycbyl4Q1-rB1pfnAU-0d4zcI9qBbXE5_niag4HhZqjmhYgAdbdU662rEpBQqF9lcLCQF6Bg/exec', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'action': 'updateAuthorization',
+                        'id': userId,
+                        'estado': estado,
+                        'motivo': motivo,
+                        'cliente': userSession.cliente
+                    })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    Toast.show(`Estado actualizado a: ${estado}`, 'success');
+                    loadUsers(); // Recargar la tabla
+                } else {
+                    throw new Error(result.message || 'Error al actualizar estado');
+                }
+            } catch (error) {
+                Toast.show(error.message, 'error');
+                if (currentSwitchElement) {
+                    currentSwitchElement.checked = estado === 'No Autorizado';
+                }
+                throw error; // Re-lanzar el error para manejarlo en saveUnauthorization
+            }
+        }
+
+        // Agregar la clase Toast al inicio del script
+        class Toast {
+            static show(message, type = 'info', duration = 3000) {
+                const container = document.querySelector('.toast-container') || (() => {
+                    const div = document.createElement('div');
+                    div.className = 'toast-container';
+                    document.body.appendChild(div);
+                    return div;
+                })();
+
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                
+                // Agregar el contenido del mensaje
+                const messageText = document.createElement('span');
+                messageText.textContent = message;
+                toast.appendChild(messageText);
+
+                container.appendChild(toast);
+
+                // Forzar un reflow para que la animación funcione
+                toast.offsetHeight;
+
+                // Mostrar el toast
+                requestAnimationFrame(() => {
+                    toast.classList.add('show');
+                });
+
+                // Ocultar y remover el toast
+                setTimeout(() => {
+                    toast.style.transform = 'translateX(120%)';
+                    toast.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        container.removeChild(toast);
+                        
+                        // Remover el contenedor si está vacío
+                        if (container.children.length === 0) {
+                            container.remove();
+                        }
+                    }, 400); // Tiempo igual a la duración de la transición
+                }, duration);
+            }
+        }
+
+        async function createUser(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) {
+                Toast.show('Usuario no encontrado', 'error');
+                return;
+            }
+
+            const button = event.target;
+            const buttonSpinner = new ButtonSpinner(button);
+            buttonSpinner.setLoading(true);
+
+            try {
+                const userSession = JSON.parse(localStorage.getItem('userSession'));
+                if (!userSession) {
+                    throw new Error('Sesión no válida');
+                }
+
+                const userData = {
+                    action: 'createUser',
+                    username: `P-${user.documento}`,
+                    password: `'${user.celular}`,
+                    nombre: `${user.nombres} ${user.apellidos}`,
+                    rol: 'Proveedor',
+                    cliente: userSession.cliente,
+                    persona_id: userId
+                };
+
+                console.log('Enviando datos:', userData); // Para debug
+
+                const response = await fetch('https://script.google.com/macros/s/AKfycbyl4Q1-rB1pfnAU-0d4zcI9qBbXE5_niag4HhZqjmhYgAdbdU662rEpBQqF9lcLCQF6Bg/exec', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(userData).toString()
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    button.classList.add('created');
+                    button.disabled = true;
+                    button.innerHTML = '<i class="material-icons">check_circle</i>';
+                    Toast.show('Usuario creado correctamente', 'success');
+                    
+                    // Recargar la lista de usuarios para actualizar el estado
+                    await loadUsers();
+                } else {
+                    throw new Error(result.message || 'Error al crear usuario');
+                }
+            } catch (error) {
+                console.error('Error completo:', error);
+                Toast.show(error.message || 'Error al crear usuario', 'error');
+                
+                // Restaurar el botón a su estado original
+                button.classList.remove('created');
+                button.disabled = false;
+                button.innerHTML = '<i class="material-icons">person_add</i>';
+            } finally {
+                buttonSpinner.setLoading(false);
+            }
+        }
+
+        function editarRegistro(id) {
+            const registro = registros.find(r => r.id === id);
+            if (!registro) {
+                Toast.show('Registro no encontrado', 'error');
+                return;
+            }
+
+            // Llenar el formulario con los datos existentes
+            document.getElementById('editId').value = registro.id;
+            document.getElementById('editObservacion').value = registro.observacion || '';
+            document.getElementById('editDocumentacion').value = registro.documentacion || '';
+            
+            // Si hay documentación, mostrar la preview
+            const previewContainer = document.getElementById('preview-edit');
+            if (registro.documentacion) {
+                previewContainer.innerHTML = `
+                    <div class="preview-item">
+                        <img src="${registro.documentacion}" alt="Documento">
+                        <button onclick="removeDocument('edit')" class="remove-button">
+                            <i class="material-icons">close</i>
+                        </button>
+                    </div>
+                `;
+            } else {
+                previewContainer.innerHTML = '';
+            }
+
+            // Abrir el modal
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        async function submitEdit(event) {
+            event.preventDefault();
+            const button = event.target.querySelector('button[type="submit"]');
+            const buttonSpinner = new ButtonSpinner(button);
+            buttonSpinner.setLoading(true);
+
+            try {
+                const userSession = JSON.parse(localStorage.getItem('userSession'));
+                const formData = new URLSearchParams();
+                
+                formData.append('action', 'editarRegistro');
+                formData.append('id', document.getElementById('editId').value);
+                formData.append('observacion', document.getElementById('editObservacion').value);
+                formData.append('documentacion', document.getElementById('editDocumentacion').value);
+                formData.append('usuario', userSession.usuario);
+                formData.append('cliente', userSession.cliente);
+
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    Toast.show('Registro actualizado correctamente', 'success');
+                    closeEditModal();
+                    await loadData(); // Recargar los datos
+                } else {
+                    throw new Error(result.message || 'Error al actualizar el registro');
+                }
+            } catch (error) {
+                console.error('Error completo:', error);
+                Toast.show(error.message, 'error');
+            } finally {
+                buttonSpinner.setLoading(false);
+            }
+        }
+
+        // Agregar función para verificar permisos
+        function canEdit() {
+            const userSession = JSON.parse(localStorage.getItem('userSession'));
+            return userSession && (userSession.rol === 'Administrador' || userSession.rol === 'Operador');
+        }
+
+        // Modificar la función generateTable para incluir la verificación
+        function generateTable(data) {
+            const tableBody = document.getElementById('dataTableBody');
+            tableBody.innerHTML = '';
+            const canEditRecords = canEdit(); // Verificar permisos
+
+            data.forEach(registro => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${registro.fecha}</td>
+                    <td>${registro.tipo}</td>
+                    <td>${registro.documento}</td>
+                    <td>${registro.nombres}</td>
+                    <td>${registro.sexo || ''}</td>
+                    <td>${registro.observacion || ''}</td>
+                    <td>
+                        ${canEditRecords ? `
+                            <button onclick="editarRegistro('${registro.id}')" class="action-button edit">
+                                <i class="material-icons">edit</i>
+                            </button>
+                        ` : ''}
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Inicializar jsPDF
+        window.jsPDF = window.jspdf.jsPDF;
+
+        function generatePDF(nombres, apellidos, empresa, documento, celular) {
+            const doc = new jsPDF();
+            
+            // Título
+            doc.setFontSize(16);
+            doc.setTextColor(255, 102, 52); // Color naranja GOES
+            doc.text("CREDENCIALES DE ACCESO", 105, 30, { align: "center" });
+            
+            // Línea decorativa
+            doc.setDrawColor(255, 102, 52);
+            doc.setLineWidth(0.5);
+            doc.line(20, 35, 190, 35);
+            
+            // Información del usuario en formato de tabla
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            
+            // Función helper para crear filas
+            function addRow(label, value, y) {
+                doc.setFillColor(245, 245, 245);
+                doc.rect(20, y-5, 170, 8, 'F');
+                doc.setFont('helvetica', 'bold');
+                doc.text(label, 25, y);
+                doc.setFont('helvetica', 'normal');
+                doc.text(value, 70, y);
+            }
+            
+            // Agregar filas
+            addRow("Empresa:", empresa, 50);
+            addRow("Nombres:", nombres, 65);
+            addRow("Apellidos:", apellidos, 80);
+            addRow("Usuario:", `P-${documento}`, 95);
+            addRow("Contraseña:", celular, 110);
+            
+            // Fecha de generación
+            doc.setFontSize(10);
+            doc.setTextColor(128, 128, 128);
+            const fecha = new Date().toLocaleDateString('es-PE');
+            doc.text(`Generado el: ${fecha}`, 20, 140);
+            
+            // Guardar el PDF
+            doc.save(`credenciales_${nombres}_${apellidos}.pdf`);
+        }
+
+        function displayData(data) {
+            const tbody = document.getElementById('tableBody');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No hay registros disponibles</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(row => `
+                <tr>
+                    <td>${row.empresa || '-'}</td>
+                    <td>${row.nombres || '-'}</td>
+                    <td>${row.apellidos || '-'}</td>
+                    <td>${row.documento || '-'}</td>
+                    <td>${row.celular || '-'}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button onclick="generateQR('${row.documento}')" class="action-button" title="Generar QR">
+                                <i class="material-icons">qr_code_2</i>
+                            </button>
+                            <button onclick="editUser('${row.documento}')" class="action-button" title="Editar">
+                                <i class="material-icons">edit</i>
+                            </button>
+                            <button onclick="deleteUser('${row.documento}')" class="action-button" title="Eliminar">
+                                <i class="material-icons">delete</i>
+                            </button>
+                            <button onclick="generatePDF('${row.nombres}', '${row.apellidos}', '${row.empresa}', '${row.documento}', '${row.celular}')" class="action-button" title="Descargar Credenciales">
+                                <i class="material-icons">picture_as_pdf</i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Configuración de filtros
+        const filterConfig = {
+            personas: [
+                { id: 'empresaFilter', placeholder: 'Filtrar por empresa' },
+                { id: 'nombresFilter', placeholder: 'Filtrar por nombres' },
+                { id: 'apellidosFilter', placeholder: 'Filtrar por apellidos' },
+                { id: 'documentoFilter', placeholder: 'Filtrar por documento' }
+            ],
+            vehiculos: [
+                { id: 'empresaFilter', placeholder: 'Filtrar por empresa' },
+                { id: 'placaTractoFilter', placeholder: 'Filtrar por placa tracto' },
+                { id: 'placaCarretaFilter', placeholder: 'Filtrar por placa carreta' }
+            ]
+        };
+
+        // Función para generar filtros
+        function generateFilters(tipo) {
+            const filterGroup = document.getElementById('filterGroup');
+            filterGroup.innerHTML = '';
+            
+            const filters = filterConfig[tipo];
+            
+            filters.forEach(filter => {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = filter.id;
+                input.placeholder = filter.placeholder;
+                input.className = 'filter-input';
+                input.addEventListener('input', () => applyFilters(tipo));
+                filterGroup.appendChild(input);
+            });
+        }
+
+        // Función para aplicar los filtros
+        function applyFilters(tipo) {
+            const tableId = tipo === 'personas' ? 'usersTableBody' : 'vehiclesTableBody';
+            const rows = document.querySelectorAll(`#${tableId} tr`);
+            const filters = filterConfig[tipo];
+            
+            rows.forEach(row => {
+                let visible = true;
+                
+                filters.forEach((filter, index) => {
+                    const filterValue = document.getElementById(filter.id).value.toLowerCase();
+                    if (filterValue) {
+                        const cellText = row.cells[index].textContent.toLowerCase();
+                        if (!cellText.includes(filterValue)) {
+                            visible = false;
+                        }
+                    }
+                });
+                
+                row.style.display = visible ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html> 

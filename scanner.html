@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner - Vigilancia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+    <style>
+        :root {
+            --goes-orange: #FF6634;
+            --goes-gray: #f5f5f5;
+            --goes-dark: #333333;
+        }
+
+        body {
+            font-family: 'Titillium Web', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--goes-gray);
+        }
+
+        .header {
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .header img {
+            height: 40px;
+        }
+
+        .scan-container {
+            padding: 20px;
+            padding-bottom: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .scan-button {
+            width: 80%;
+            max-width: 300px;
+            height: 120px;
+            background: var(--goes-orange);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .scan-button i {
+            font-size: 2.5rem;
+        }
+
+        .scan-result {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .scan-result.show {
+            display: block;
+        }
+
+        .scan-result h3 {
+            color: var(--goes-orange);
+            margin: 0 0 15px 0;
+        }
+
+        .scan-result p {
+            margin: 5px 0;
+        }
+
+        .logout-button {
+            padding: 8px 16px;
+            background: var(--goes-dark);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            font-size: 0.9rem;
+            color: var(--goes-dark);
+        }
+
+        .user-info p {
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 12px 20px;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .client-logo {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .goes-logo {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 100px;
+            height: auto;
+            opacity: 0.8;
+        }
+
+        #reader {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        #reader video {
+            border-radius: 8px;
+        }
+
+        #reader button {
+            background: var(--goes-orange) !important;
+            color: white !important;
+            border: none !important;
+            padding: 8px 16px !important;
+            border-radius: 4px !important;
+            cursor: pointer !important;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .status-banner {
+            padding: 20px;
+            text-align: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .status-banner.autorizado {
+            background: #4CAF50;
+        }
+
+        .status-banner.denegado {
+            background: #f44336;
+        }
+
+        .status-icon {
+            font-size: 2rem;
+        }
+
+        .motivo-text {
+            padding: 15px 20px;
+            background: #f5f5f5;
+            margin: 10px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .datos-container {
+            padding: 0 10px;
+        }
+
+        .dato-grupo {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .dato-grupo:last-child {
+            border-bottom: none;
+        }
+
+        .dato-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .dato-valor {
+            font-size: 1.1rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .close-button {
+            background: var(--goes-dark);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Estilos para el botón de validar */
+        .validate-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-right: 10px;
+        }
+
+        /* Estilos para el modal de validación */
+        #validationModal .modal-content {
+            max-width: 500px;
+            width: 90%;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        #validationModal .modal-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            padding: 15px 20px;
+            border-radius: 12px 12px 0 0;
+        }
+
+        #validationModal .modal-header h2 {
+            margin: 0;
+            color: #333;
+            font-size: 1.25rem;
+        }
+
+        #validationModal .modal-body {
+            padding: 20px;
+        }
+
+        #validationModal .form-group {
+            margin-bottom: 20px;
+        }
+
+        #validationModal .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        #validationModal textarea.form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        #validationModal .image-upload-section {
+            margin-top: 20px;
+        }
+
+        #validationModal .upload-button {
+            background-color: #FF6634;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        #validationModal .upload-button:hover {
+            background-color: #e55a2b;
+        }
+
+        #validationModal .preview-container {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        #validationModal .preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #ddd;
+        }
+
+        #validationModal .preview-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #validationModal .remove-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+
+        #validationModal .remove-button:hover {
+            background: rgba(255, 0, 0, 0.9);
+        }
+
+        #validationModal .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        #validationModal .save-button {
+            background-color: #FF6634;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        #validationModal .save-button:hover {
+            background-color: #e55a2b;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .rotating {
+            animation: rotate 1s linear infinite;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+            background: #4CAF50;
+        }
+
+        .toast.error {
+            background: #f44336;
+        }
+
+        .toast.info {
+            background: #2196F3;
+        }
+
+        .image-upload-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .upload-button {
+            background: var(--goes-orange);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .preview-container {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .preview-item {
+            position: relative;
+            margin: 5px;
+        }
+
+        .preview-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .remove-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <img src="https://goesperu.com/wp-content/uploads/2024/08/771x216.png" alt="GOES Logo">
+    </header>
+
+    <div class="scan-container">
+        <button class="scan-button" onclick="startScan()">
+            <i class="material-icons">qr_code_scanner</i>
+            Escanear QR
+        </button>
+
+        <div id="reader" style="display: none;"></div>
+
+        <div class="scan-result" id="scanResult">
+            <h3>Resultado del Escaneo</h3>
+            <p><strong>Proveedor:</strong> <span id="proveedorName">-</span></p>
+            <p><strong>Fecha:</strong> <span id="scanDate">-</span></p>
+            <p><strong>Estado:</strong> <span id="scanStatus">-</span></p>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="user-info">
+            <p id="userName">Nombre: </p>
+            <p id="userRole">Rol: </p>
+        </div>
+        <button class="logout-button" onclick="handleLogout()">
+            <i class="material-icons">logout</i>
+            Salir
+        </button>
+    </footer>
+
+    <div id="scanModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div id="statusBanner" class="status-banner">
+                    <i class="material-icons status-icon">check_circle</i>
+                    <span class="status-text">AUTORIZADO</span>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div id="motivoText" class="motivo-text"></div>
+                <div id="datosContainer" class="datos-container"></div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="showValidationModal()" class="validate-button">
+                    <i class="material-icons">check</i>
+                    Validar
+                </button>
+                <button onclick="closeModal()" class="close-button">
+                    <i class="material-icons">close</i>
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="validationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Validación</h2>
+                <button class="close-button" onclick="closeValidationModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="validationComment">Comentario:</label>
+                    <textarea id="validationComment" rows="3" class="form-control"></textarea>
+                </div>
+                <div class="image-upload-section">
+                    <button onclick="openCloudinaryUploader()" class="upload-button">
+                        <i class="material-icons">add_photo_alternate</i>
+                        Agregar Foto
+                    </button>
+                    <div id="previewContainer" class="preview-container"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="save-button" onclick="handleValidation()">
+                    <span class="button-text">Guardar</span>
+                    <div class="spinner"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let html5QrcodeScanner = null;
+        let currentScanData = null; // Variable para almacenar los datos del escaneo actual
+        let cloudinaryWidget;
+        let uploadedImages = [];
+
+        // Verificar sesión y cargar datos del usuario
+        document.addEventListener('DOMContentLoaded', () => {
+            const userSession = JSON.parse(localStorage.getItem('userSession'));
+            if (!userSession || userSession.rol.toLowerCase() !== 'vigilante') {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Mostrar información del usuario
+            document.getElementById('userName').textContent = `Nombre: ${userSession.nombres}`;
+            document.getElementById('userRole').textContent = `Rol: ${userSession.rol}`;
+        });
+
+        function handleLogout() {
+            localStorage.removeItem('userSession');
+            window.location.href = 'index.html';
+        }
+
+        async function startScan() {
+            const reader = document.getElementById('reader');
+            reader.style.display = 'block';
+            
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear();
+            }
+
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader", 
+                { 
+                    fps: 10,
+                    qrbox: {width: 250, height: 250},
+                    aspectRatio: 1.0
+                }
+            );
+
+            html5QrcodeScanner.render(async (decodedText) => {
+                // Cuando se detecta un QR
+                html5QrcodeScanner.clear();
+                reader.style.display = 'none';
+                
+                try {
+                    const userSession = JSON.parse(localStorage.getItem('userSession'));
+                    const formData = {
+                        action: 'scanQR',
+                        id: decodedText,
+                        vigilante: userSession.nombres
+                    };
+
+                    const response = await fetch('https://script.google.com/macros/s/AKfycbyl4Q1-rB1pfnAU-0d4zcI9qBbXE5_niag4HhZqjmhYgAdbdU662rEpBQqF9lcLCQF6Bg/exec', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams(formData).toString()
+                    });
+
+                    const result = await response.json();
+                    if (result.status === 'success') {
+                        showScanResult(result.data);
+                    } else {
+                        throw new Error(result.message || 'Error al procesar QR');
+                    }
+                } catch (error) {
+                    alert(error.message);
+                }
+            });
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+
+        function showScanResult(result) {
+            currentScanData = result; // Guardar los datos del escaneo
+            const modal = document.getElementById('scanModal');
+            const statusBanner = document.getElementById('statusBanner');
+            const motivoText = document.getElementById('motivoText');
+            const datosContainer = document.getElementById('datosContainer');
+
+            // Configurar estado y banner
+            if (result.autorizado) {
+                statusBanner.className = 'status-banner autorizado';
+                statusBanner.innerHTML = '<i class="material-icons">check_circle</i><span>AUTORIZADO</span>';
+            } else {
+                statusBanner.className = 'status-banner denegado';
+                statusBanner.innerHTML = '<i class="material-icons">cancel</i><span>DENEGADO</span>';
+            }
+
+            motivoText.textContent = result.motivo;
+            datosContainer.innerHTML = '';
+
+            if (result.tipo === 'persona') {
+                const datosPersona = [
+                    { label: 'Empresa', valor: result.empresa },
+                    { label: 'Nombres', valor: result.nombres },
+                    { label: 'Apellidos', valor: result.apellidos },
+                    { label: 'Tipo de Documento', valor: result.tipoDocumento },
+                    { label: 'Documento', valor: result.documento },
+                    { label: 'Sexo', valor: result.sexo },
+                    { label: 'Celular', valor: result.celular },
+                    { label: 'Correo Electrónico', valor: result.correo },
+                    { label: 'Número de Brevete', valor: result.numeroBrevete || '-' },
+                    { label: 'Vencimiento Brevete', valor: formatDate(result.vencimientoBrevete) },
+                    { label: 'Vencimiento SCTR', valor: formatDate(result.vencimientoSCTR) }
+                ];
+
+                datosPersona.forEach(dato => {
+                    datosContainer.innerHTML += `
+                        <div class="dato-grupo">
+                            <div class="dato-label">${dato.label}</div>
+                            <div class="dato-valor">${dato.valor || '-'}</div>
+                        </div>
+                    `;
+                });
+            } else {
+                const datosVehiculo = [
+                    { label: 'Empresa', valor: result.empresa },
+                    { label: 'Placa Tracto', valor: result.placaTracto },
+                    { label: 'Placa Carreta', valor: result.placaCarreta },
+                    { label: 'Número SOAT', valor: result.numeroSOAT },
+                    { label: 'Vencimiento SOAT', valor: formatDate(result.vencimientoSOAT) },
+                    { label: 'Número Tarjeta Propiedad', valor: result.numeroTarjetaPropiedad },
+                    { label: 'Fecha Tarjeta Propiedad', valor: formatDate(result.fechaTarjetaPropiedad) },
+                    { label: 'Vencimiento Revisión Técnica', valor: formatDate(result.vencimientoRevisionTecnica) }
+                ];
+
+                datosVehiculo.forEach(dato => {
+                    datosContainer.innerHTML += `
+                        <div class="dato-grupo">
+                            <div class="dato-label">${dato.label}</div>
+                            <div class="dato-valor">${dato.valor || '-'}</div>
+                        </div>
+                    `;
+                });
+            }
+
+            modal.classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('scanModal').classList.remove('show');
+        }
+
+        function showValidationModal() {
+            document.getElementById('validationModal').classList.add('show');
+            document.getElementById('validationComment').value = '';
+        }
+
+        function closeValidationModal() {
+            document.getElementById('validationModal').classList.remove('show');
+        }
+
+        async function handleValidation() {
+            const button = document.querySelector('.save-button');
+            const buttonSpinner = new ButtonSpinner(button);
+            buttonSpinner.setLoading(true);
+
+            try {
+                const comentario = document.getElementById('validationComment').value.trim();
+                if (!comentario) {
+                    throw new Error('Por favor ingrese un comentario');
+                }
+
+                const userSession = JSON.parse(localStorage.getItem('userSession'));
+                
+                const formData = {
+                    action: 'saveValidation',
+                    tipo: currentScanData.tipo,
+                    vigilante: userSession.nombres,
+                    cliente: userSession.cliente,
+                    comentario: comentario,
+                    documentacion: uploadedImages[0] || '', // Tomar la primera imagen subida
+                    ...currentScanData
+                };
+
+                const response = await fetch('https://script.google.com/macros/s/AKfycbyl4Q1-rB1pfnAU-0d4zcI9qBbXE5_niag4HhZqjmhYgAdbdU662rEpBQqF9lcLCQF6Bg/exec', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(formData).toString()
+                });
+
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    Toast.show('Registro guardado correctamente', 'success');
+                    uploadedImages = []; // Limpiar las imágenes después de guardar
+                    closeValidationModal();
+                    closeModal();
+                } else {
+                    throw new Error(result.message || 'Error al guardar el registro');
+                }
+            } catch (error) {
+                Toast.show(error.message, 'error');
+            } finally {
+                buttonSpinner.setLoading(false);
+            }
+        }
+
+        // Agregar la clase ButtonSpinner si no existe
+        class ButtonSpinner {
+            constructor(button) {
+                this.button = button;
+                this.originalContent = button.innerHTML;
+            }
+
+            setLoading(isLoading) {
+                if (isLoading) {
+                    this.button.innerHTML = '<i class="material-icons rotating">refresh</i>';
+                    this.button.disabled = true;
+                } else {
+                    this.button.innerHTML = this.originalContent;
+                    this.button.disabled = false;
+                }
+            }
+        }
+
+        // Agregar la clase Toast
+        class Toast {
+            static show(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                
+                if (document.querySelector('.toast')) {
+                    document.querySelector('.toast').remove();
+                }
+                
+                document.body.appendChild(toast);
+                
+                // Animación de entrada
+                setTimeout(() => toast.classList.add('show'), 100);
+                
+                // Remover después de 3 segundos
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+        }
+
+        function createCloudinaryWidget() {
+            return cloudinary.createUploadWidget({
+                cloudName: 'dzbg2op4x',
+                uploadPreset: 'ml_default',
+                sources: ['local', 'camera', 'url'],
+                multiple: false,
+                maxFiles: 1,
+                maxFileSize: 5000000,
+                language: 'es'
+            }, (error, result) => {
+                if (!error && result && result.event === "success") {
+                    const imageUrl = result.info.secure_url;
+                    uploadedImages.push(imageUrl);
+                    updateImagePreview();
+                }
+            });
+        }
+
+        function openCloudinaryUploader() {
+            cloudinaryWidget = createCloudinaryWidget();
+            cloudinaryWidget.open();
+        }
+
+        function updateImagePreview() {
+            const container = document.getElementById('previewContainer');
+            container.innerHTML = uploadedImages.map((imageUrl, index) => `
+                <div class="preview-item">
+                    <img src="${imageUrl}" alt="Documento" class="preview-image">
+                    <button onclick="removeImage(${index})" class="remove-button">
+                        <i class="material-icons">close</i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function removeImage(index) {
+            uploadedImages.splice(index, 1);
+            updateImagePreview();
+        }
+    </script>
+</body>
+</html> 
